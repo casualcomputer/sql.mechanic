@@ -1,0 +1,16 @@
+Package: sql.mechanic
+Type: Package
+Title: SQL Query Generator for Data Quality Assurance 
+Version: 0.1.0
+Author: Henry L.
+Maintainer: Henry L. <henry.data.io.21@gmail.com>
+Description: This package allows users to generate SQL codes, which are stored to the clipboard and which can then be run in various DBMS (e.g. Netezza, MS-SQL, DB2, etc.)
+License: GPL-3 + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+	utils 
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
