@@ -42,7 +42,8 @@ get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtyp
         if (quote_table_name){ table_name_quoted = paste0("\'\"",table_name,"\"\'")} else {
           table_name_quoted = table_name}
 
-        sql_codes <- paste0(" SELECT REPLACE(REPLACE(REPLACE('<start> SELECT ''<col>'' as colname,
+        sql_codes <- paste0(" SELECT REPLACE(REPLACE(REPLACE(
+                               '<start> SELECT ''<col>'' as colname,
                                COUNT(*) as numvalues,
                                MAX(freqnull) as freqnull,
                                CAST(MIN(minval) as CHAR(100)) as minval,
@@ -61,7 +62,8 @@ get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtyp
                                '<start>',
                                (CASE WHEN ordinal_position = 1 THEN ''
                                ELSE 'UNION ALL' END)) as codes_data_summary
-                               FROM (SELECT table_name, case when regexp_like(column_name,'[a-z.]')  then \'\"\'||trim(column_name)||\'\"\' else column_name end as column_name  , ordinal_position
+                               FROM (SELECT table_name, case when regexp_like(column_name,'[a-z.]')  then \'\"\'||trim(column_name)||\'\"\'
+                                                             else column_name end as column_name  , ordinal_position
                                FROM information_schema.columns
                                WHERE table_name =","'",table_name,"'",") a;")
       }
