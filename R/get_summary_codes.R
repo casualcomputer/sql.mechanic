@@ -71,7 +71,7 @@ get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtyp
 
 
         if (quote_table_name){ table_name_quoted = paste0("\'\"",table_name,"\"\'")} else {
-        table_name_quoted = table_name}
+          table_name_quoted = table_name}
 
         sql_codes <-  paste0("SELECT REPLACE(REPLACE(REPLACE(
                                     '<start> SELECT ''<col>'' as colname,
