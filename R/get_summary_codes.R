@@ -7,7 +7,7 @@
 #' @return character vector containing the SQL scripts
 #' @export
 
-get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtype="Netezza"){
+get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtype="Netezza", quote_table_name=FALSE){
 
       target_path <- gsub("\\[|\\]","",target_path) #get rid of opening/closing square brackets in the [db].[schema].[table] notation.
       db_path <- unlist(strsplit(target_path,"\\.")) #split on period to make a vector of length 3
@@ -38,65 +38,76 @@ get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtyp
 
       if(type=="basic"& dbtype=="Netezza"){
 
-        sql_codes <-  paste0(" SELECT REPLACE(REPLACE(REPLACE('<start> SELECT ''<col>'' as colname,
-                                     COUNT(*) as numvalues,
-                                     MAX(freqnull) as freqnull,
-                                     CAST(MIN(minval) as VARCHAR(255)) as minval,
-                                     SUM(CASE WHEN <col> = minval THEN freq ELSE 0 END) as numminvals,
-                                     CAST(MAX(maxval) as VARCHAR(255)) as maxval,
-                                     SUM(CASE WHEN <col> = maxval THEN freq ELSE 0 END) as nummaxvals,
-                                     SUM(CASE WHEN freq =1 THEN 1 ELSE 0 END) as numuniques
 
-                                     FROM (SELECT <col>, COUNT(*) as freq
-                                     FROM ",schema_name,".<tab> GROUP BY <col>) osum
-                                     CROSS JOIN (SELECT MIN(<col>) as minval, MAX(<col>) as maxval, SUM(CASE WHEN <col> IS NULL THEN 1 ELSE 0 END) as freqnull
-                                     FROM (SELECT <col> FROM ",schema_name,".<tab>) osum
-                                     ) summary',
-                                       '<col>', column_name),
-                                     '<tab>', table_name),
-                                     '<start>',
-                                     (CASE WHEN ordinal_position = 1 THEN ''
-                                     ELSE 'UNION ALL' END)) as codes_data_summary
-                                     FROM (SELECT table_name, column_name, ordinal_position
-                                     FROM information_schema.columns
-                                     WHERE table_name = ","'",table_name,"'",") a;")
+        if (quote_table_name){ table_name_quoted = paste0("\'\"",table_name,"\"\'")} else {
+          table_name_quoted = table_name}
+
+        sql_codes <- paste0(" SELECT REPLACE(REPLACE(REPLACE('<start> SELECT ''<col>'' as colname,
+                               COUNT(*) as numvalues,
+                               MAX(freqnull) as freqnull,
+                               CAST(MIN(minval) as CHAR(100)) as minval,
+                               SUM(CASE WHEN <col> = minval THEN freq ELSE 0 END) as numminvals,
+                               CAST(MAX(maxval) as CHAR(100)) as maxval,
+                               SUM(CASE WHEN <col> = maxval THEN freq ELSE 0 END) as nummaxvals,
+                               SUM(CASE WHEN freq =1 THEN 1 ELSE 0 END) as numuniques
+
+                               FROM (SELECT <col>, COUNT(*) as freq
+                               FROM ",schema_name,".<tab> GROUP BY <col>) osum
+                                                   CROSS JOIN (SELECT MIN(<col>) as minval, MAX(<col>) as maxval, SUM(CASE WHEN <col> IS NULL THEN 1 ELSE 0 END) as freqnull
+                                                   FROM (SELECT <col> FROM ",schema_name,".<tab>) osum
+                                                   ) summary',
+                               '<col>', column_name),
+                               '<tab>', ", table_name_quoted, "),
+                               '<start>',
+                               (CASE WHEN ordinal_position = 1 THEN ''
+                               ELSE 'UNION ALL' END)) as codes_data_summary
+                               FROM (SELECT table_name, case when regexp_like(column_name,'[a-z.]')  then \'\"\'||trim(column_name)||\'\"\' else column_name end as column_name  , ordinal_position
+                               FROM information_schema.columns
+                               WHERE table_name =","'",table_name,"'",") a;")
       }
 
 
       if(type=="advanced"&dbtype=="Netezza"){
 
+
+        if (quote_table_name){ table_name_quoted = paste0("\'\"",table_name,"\"\'")} else {
+        table_name_quoted = table_name}
+
         sql_codes <-  paste0("SELECT REPLACE(REPLACE(REPLACE(
-                                     '<start> SELECT ''<col>'' as colname,
+                                    '<start> SELECT ''<col>'' as colname,
                                      COUNT(*) as numvalues,
                                      MAX(freqnull) as freqnull,
-                                     CAST(MIN(minval) AS VARCHAR(255)) as minval,
+                                     CAST(MIN(minval) AS VARCHAR(25)) as minval,
                                      SUM(CASE WHEN <col>  = minval THEN freq ELSE 0 END) as numminvals,
-                                     CAST(MAX(maxval) AS VARCHAR(255)) as maxval,
+                                     CAST(MAX(maxval) AS VARCHAR(25)) as maxval,
                                      SUM(CASE WHEN <col>  = maxval THEN freq ELSE 0 END) as nummaxvals,
-                                     CAST(MIN(CASE WHEN freq = maxfreq THEN <col>  END) AS VARCHAR(255)) as mode,
+                                     CAST(MIN(CASE WHEN freq = maxfreq THEN <col>  END) AS VARCHAR(25)) as mode,
                                      SUM(CASE WHEN freq = maxfreq THEN 1 ELSE 0 END) as nummodes,
                                      MAX(maxfreq) as modefreq,
-                                     CAST(MIN(CASE WHEN freq = minfreq THEN <col>  END) AS VARCHAR(255)) as antimode,
+                                     CAST(MIN(CASE WHEN freq = minfreq THEN <col>  END) AS VARCHAR(25)) as antimode,
                                      SUM(CASE WHEN freq = minfreq THEN 1 ELSE 0 END) as numantimodes,
                                      MAX(minfreq) as antimodefreq,
                                      SUM(CASE WHEN freq = 1 THEN freq ELSE 0 END) as numuniques
                                      FROM (SELECT <col> , COUNT(*) as freq
                                      FROM ",schema_name,".<tab>
-                                     GROUP BY <col> ) osum CROSS JOIN
+        GROUP BY <col> ) osum CROSS JOIN
                                      (SELECT MIN(freq) as minfreq, MAX(freq) as maxfreq,
                                      MIN(<col> ) as minval, MAX(<col> ) as maxval,
                                      SUM(CASE WHEN <col>  IS NULL THEN freq ELSE 0 END) as freqnull
                                      FROM (SELECT <col> , COUNT(*) as freq
                                      FROM ",schema_name,".<tab>
-                                     GROUP BY <col> ) osum) summary',
+        GROUP BY <col> ) osum) summary',
                                      '<col>', column_name),
-                                     '<tab>', table_name),
+                                     '<tab>',", table_name_quoted,"),
                                      '<start>',
                                      (CASE WHEN ordinal_position = 1 THEN ''
                                      ELSE 'UNION ALL' END)) as codes_data_summary
-                                     FROM (SELECT table_name, column_name, ordinal_position
+                                     FROM (SELECT table_name, ordinal_position,
+                                                  case when regexp_like(column_name,'[a-z.]')  then \'\"\'||trim(column_name)||\'\"\'
+                                                       else column_name end as column_name
                                      FROM information_schema.columns
                                      WHERE table_name = ","'",table_name,"'",") a;")
+
       }
 
 
