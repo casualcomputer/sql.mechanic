@@ -1,10 +1,12 @@
 #' Generate SQL codes used to summarize tables'
 
-#' @param target_path Path to the table
-#' @param show_codes character string: option to print the codes
+#' @param target_path character string: location of the table, i.e., "database_name.schema_name.table_name"
+#' @param show_codes Boolean: set to TRUE to print out results, FALSE otherwise
 #' @param type character string: choice of basic or advance summary
-#' @param dbtype character string: choice of database type
-#' @return character vector containing the SQL scripts
+#' @param dbtype character string: exact matching to one of c("basic", "advanced")
+#' @param quote_table_name Boolean: wrap quotation marks around the table name, if set to TRUE; otherwise, FALSE
+#' @param clipboard_enabled Boolean: copy resulting SQL scripts to Clipboard, if set to TRUE, otherwise, if set to FALSE
+#' @return character string containing the SQL scripts
 #' @export
 
 get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtype="Netezza", quote_table_name=FALSE, clipboard_enabled=TRUE){
