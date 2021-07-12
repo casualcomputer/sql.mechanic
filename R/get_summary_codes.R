@@ -145,45 +145,44 @@ get_summary_codes <- function(target_path, show_codes=FALSE, type="basic", dbtyp
 
       if(type=="advanced" & dbtype=="MSSQL"){
 
-        sql_codes <-  paste0("
-
-                                     USE ",db_name,
-                             "
-
-                                     GO
-
-                                     SELECT REPLACE(REPLACE(REPLACE(
-                                     '<start> SELECT ''<col>'' as colname,
-                                     COUNT(*) as numvalues,
-                                     MAX(freqnull) as freqnull,
-                                     CAST(MIN(minval) AS VARCHAR) as minval,
-                                     SUM(CASE WHEN <col>  = minval THEN freq ELSE 0 END) as numminvals,
-                                     CAST(MAX(maxval) AS VARCHAR) as maxval,
-                                     SUM(CASE WHEN <col>  = maxval THEN freq ELSE 0 END) as nummaxvals,
-                                     CAST(MIN(CASE WHEN freq = maxfreq THEN <col>  END) AS VARCHAR) as mode,
-                                     SUM(CASE WHEN freq = maxfreq THEN 1 ELSE 0 END) as nummodes,
-                                     MAX(maxfreq) as modefreq,
-                                     CAST(MIN(CASE WHEN freq = minfreq THEN <col>  END) AS VARCHAR) as antimode,
-                                     SUM(CASE WHEN freq = minfreq THEN 1 ELSE 0 END) as numantimodes,
-                                     MAX(minfreq) as antimodefreq,
-                                     SUM(CASE WHEN freq = 1 THEN freq ELSE 0 END) as numuniques
-                                     FROM (SELECT <col> , COUNT(*) as freq
-                                     FROM ",schema_name,".<tab>
-                                     GROUP BY <col> ) osum CROSS JOIN
-                                     (SELECT MIN(freq) as minfreq, MAX(freq) as maxfreq,
-                                     MIN(<col> ) as minval, MAX(<col> ) as maxval,
-                                     SUM(CASE WHEN <col>  IS NULL THEN freq ELSE 0 END) as freqnull
-                                     FROM (SELECT <col> , COUNT(*) as freq
-                                     FROM ",schema_name,".<tab>
-                                     GROUP BY <col> ) osum) summary',
-                                     '<col>', column_name),
-                                     '<tab>', table_name),
-                                     '<start>',
-                                     (CASE WHEN ordinal_position = 1 THEN ''
-                                     ELSE 'UNION ALL' END)) as codes_data_summary
-                                     FROM (SELECT table_name, column_name, ordinal_position
-                                     FROM information_schema.columns
-                                     WHERE table_name = ","'",table_name,"'",") a;")
+          sql_codes <-  paste0("
+                                           USE ",db_name,
+                               "
+                                           GO
+                                           SELECT REPLACE(REPLACE(REPLACE(
+                                           '<start> SELECT ''<col>'' as colname,
+                                           COUNT(*) as numvalues,
+                                           MAX(freqnull) as freqnull,
+                                           CAST(MIN(minval) AS VARCHAR) as minval,
+                                           SUM(CASE WHEN <col>  = minval THEN freq ELSE 0 END) as numminvals,
+                                           CAST(MAX(maxval) AS VARCHAR) as maxval,
+                                           SUM(CASE WHEN <col>  = maxval THEN freq ELSE 0 END) as nummaxvals,
+                                           CAST(MIN(CASE WHEN freq = maxfreq THEN <col>  END) AS VARCHAR) as mode,
+                                           SUM(CASE WHEN freq = maxfreq THEN 1 ELSE 0 END) as nummodes,
+                                           MAX(maxfreq) as modefreq,
+                                           CAST(MIN(CASE WHEN freq = minfreq THEN <col>  END) AS VARCHAR) as antimode,
+                                           SUM(CASE WHEN freq = minfreq THEN 1 ELSE 0 END) as numantimodes,
+                                           MAX(minfreq) as antimodefreq,
+                                           SUM(CASE WHEN freq = 1 THEN freq ELSE 0 END) as numuniques
+                                           FROM (SELECT <col> , COUNT(*) as freq
+                                           FROM ",schema_name,".<tab>
+                                           GROUP BY <col> ) osum CROSS JOIN
+                                           (SELECT MIN(freq) as minfreq, MAX(freq) as maxfreq,
+                                           MIN(<col> ) as minval, MAX(<col> ) as maxval,
+                                           SUM(CASE WHEN <col>  IS NULL THEN freq ELSE 0 END) as freqnull
+                                           FROM (SELECT <col> , COUNT(*) as freq
+                                           FROM ",schema_name,".<tab>
+                                           GROUP BY <col> ) osum) summary',
+                                           '<col>', column_name),
+                                           '<tab>', table_name),
+                                           '<start>',
+                                           (CASE WHEN ordinal_position = 1 THEN ''
+                                           ELSE 'UNION ALL' END)) as codes_data_summary
+                                           FROM ( ", "SELECT table_name, case when column_name like ","'",'%[\\.]%',"'",
+                                                     " then concat(","'",'"',"'",",column_name,","'", '"' ,"'",")",
+                                                     " else column_name end as column_name, ordinal_position" ,
+                                           " FROM information_schema.columns
+                                           WHERE table_name = ","'",table_name,"'",") a;")
 
       }
 
