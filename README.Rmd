@@ -1,0 +1,82 @@
+---
+title: "Summarizing large tables with SQL"
+author: "Henry Luan"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+The helper function `get_summary_codes` in the `sql.mechanic` package takes in a string that specifies a table's database name, schema name, and table name. It outputs an SQL query that summarizes the table's column statistics. Statistics produced by the function are good for the quality assurance of large tables.
+
+## Who needs it?
+
+1) If you work with tables inside databases hosted on powerful servers (usually on-premise) but have limited compute resources (e.g. RAM, GPU, CPU) for advanced BI (e.g. Python, R, SAS, etc.)
+
+2)  If it's much cheaper for you to use database servers than analytics servers (e.g. those for Python, R, etc.) either on-premise or on the cloud.
+
+## Application 1: Generate SQL queries and execute them in DMBS
+### * Step 1: Install packages
+You can install the library from my GitHub. If you have concerns regarding the package security, you can download, check, and use the `get_summary_codes.R` file directly. 
+
+```{r,  message=FALSE, warning=FALSE}
+# Install package
+  library(devtools)
+  install_github("casualcomputer/sql.mechanic")
+
+# Alternative: use the 'get_summary_codes.R' file only
+  # source("get_summary_codes.R")
+```
+
+### * Step 2: Generate SQL quries
+The following codes 1) **generate** the SQL queries you need to summarize and 2) **copy** (Ctrl+C) the codes to your clipboard. All you have to do is paste it to your SQL editor and execute the queries.   
+
+```{r, fig.show='hold'}
+library(sql.mechanic)
+
+#SQL codes for basic summary, Netezza database 
+    sql_query = get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="basic", dbtype="Netezza")   
+    writeClipboard(sql_query) #copy sql queries to the clipboard
+    
+#SQL codes for advanced summary, Netezza database 
+    #get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="advanced", dbtype="Netezza")   
+    
+#SQL codes for basic summary, Microsoft SQL Server 
+    #get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="basic", dbtype="MSSQL")  
+
+#SQL codes for advanced summary, Microsoft SQL Server
+    #get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="advanced", dbtype="MSSQL")  
+```
+
+### * Step 3: Paste the codes in your clipboard and run it in SQL
+### * Step 4: Copy, paste and execute the SQL queries from Step 3.
+
+### Application 2: generate SQL and fetch results in R
+
+```{r, fig.show='hold'}
+library(odbc)
+library(DBI)
+
+# Method 1: prompting user
+# con <- dbConnect(odbc(),
+#                  Driver = "SQL Server",
+#                  Server = "mysqlhost",
+#                  Database = "mydbname",
+#                  UID = "myuser",
+#                  PWD = rstudioapi::askForPassword("Database password"),
+#                  Port = 1433)
+
+# Method 2: Using a DSN
+#con <- dbConnect(odbc::odbc(), "DNS_NAMES")
+
+```
+
