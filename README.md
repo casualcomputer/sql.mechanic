@@ -1,43 +1,42 @@
----
-title: "Summarizing large tables with SQL"
-author: "Henry Luan"
-output: rmarkdown::github_document 
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+Summarizing large tables with SQL
+================
+Henry Luan
 
 ## Overview
 
-The helper function `get_summary_codes` in the `sql.mechanic` package takes in a string that specifies a table's database name, schema name, and table name. It outputs an SQL query that summarizes the table's column statistics. If you need a quick solution, jump to **Example 2**.
+The helper function `get_summary_codes` in the `sql.mechanic` package
+takes in a string that specifies a table’s database name, schema name,
+and table name. It outputs an SQL query that summarizes the table’s
+column statistics. If you need a quick solution, jump to [Example
+2](##%20Example%202:%20Automatically%20summarize%20tables%20in%20your%20databases).
 
 ## Intended User
 
--   If you work with tables inside databases hosted on powerful servers (usually on-premise) but have limited compute resources (e.g. RAM, GPU, CPU) for advanced BI (e.g. Python, R, SAS, etc.)
+- If you work with tables inside databases hosted on powerful servers
+  (usually on-premise) but have limited compute resources (e.g. RAM,
+  GPU, CPU) for advanced BI (e.g. Python, R, SAS, etc.)
 
--   If it's much cheaper for you to use database servers than analytics servers (e.g. those for Python, R, etc.) either on-premise or on the cloud.
+- If it’s much cheaper for you to use database servers than analytics
+  servers (e.g. those for Python, R, etc.) either on-premise or on the
+  cloud.
 
 ## Limitations
 
--   You should test the CPU and disk usage of your database server using some simple test cases constructed based on **Example 2**.
+- You should test the CPU and disk usage of your database server using
+  some simple examples constructed in Example 2.
 
--   Currently, the function only works with Microsoft SQL Server and Netezza databases. Feel free to contribute to the codes, if interested.
+- The current query only works for Microsoft SQL Server and Netezza
+  databases. Feel free to contribute to the codes, if interested.
 
 ## Example 1: Generate SQL queries and execute them in DMBS
 
 ### \* Step 1: Install packages
 
-You can install the library from my GitHub. If you have concerns regarding the package's security, you can download, check, and use the `get_summary_codes.R` file directly.
+You can install the library from my GitHub. If you have concerns
+regarding the package’s security, you can download, check, and use the
+`get_summary_codes.R` file directly.
 
-```{r,  message=FALSE, warning=FALSE}
+``` r
 # Install package
   library(devtools)
   install_github("casualcomputer/sql.mechanic",quiet=TRUE)
@@ -48,9 +47,12 @@ You can install the library from my GitHub. If you have concerns regarding the p
 
 ### \* Step 2: Generate SQL quires
 
-The following codes 1) **generate** the SQL queries you need to summarize a table, and 2) **copy** (Ctrl+C) the codes to your clipboard. All you have to do is paste it to your SQL editor and execute the queries.
+The following codes 1) **generate** the SQL queries you need to
+summarize a table, and 2) **copy** (Ctrl+C) the codes to your clipboard.
+All you have to do is paste it to your SQL editor and execute the
+queries.
 
-```{r, fig.show='hold'}
+``` r
 library(sql.mechanic)
 
 #SQL codes for basic summary, Netezza database 
@@ -75,9 +77,10 @@ library(sql.mechanic)
 
 ## Example 2: Automatically summarize tables in your databases
 
-This example shows you how you can achieve everything you did in Example 1 with a few lines of R codes.
+This example shows you how you can achieve everything you did in Example
+1 with a few lines of R codes.
 
-```{r, fig.show='hold',eval=FALSE}
+``` r
 library(odbc)
 library(DBI)
 
@@ -95,11 +98,11 @@ con <- dbConnect(odbc(),
 
 sql_query = get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="basic", dbtype="Netezza") 
 
-res = dbSendQuery(con, sql_query) # part of Step 3 in "Example 1"
-sql_query_mod = dbFetch(res) # part of Step 3 in "Example 1"
+res = dbSendQuery(con, sql_query) # part of Step 3 in "Application 1"
+sql_query_mod = dbFetch(res) # part of Step 3 in "Application 1"
 
-res = dbSendQuery(con, sql_query_mod) # part of Step 4 in "Example 1"
-output_table = dbFetch(res) # part of Step 4 in "Example 1"
+res = dbSendQuery(con, sql_query_mod) # part of Step 4 in "Application 1"
+output_table = dbFetch(res) # part of Step 4 in "Application 1"
 print(output) #desired summary table
 
 dbDisconnect(con) #close database connection
