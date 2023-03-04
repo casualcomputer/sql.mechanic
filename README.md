@@ -7,8 +7,7 @@ Henry Luan
 The helper function `get_summary_codes` in the `sql.mechanic` package
 takes in a string that specifies a table’s database name, schema name,
 and table name. It outputs an SQL query that summarizes the table’s
-column statistics. If you need a quick solution, jump to [Example
-2](##%20Example%202:%20Automatically%20summarize%20tables%20in%20your%20databases).
+column statistics. If you need a quick solution, jump to **Example 2**.
 
 ## Intended User
 
@@ -23,10 +22,11 @@ column statistics. If you need a quick solution, jump to [Example
 ## Limitations
 
 - You should test the CPU and disk usage of your database server using
-  some simple examples constructed in Example 2.
+  some simple test cases constructed based on **Example 2**.
 
-- The current query only works for Microsoft SQL Server and Netezza
-  databases. Feel free to contribute to the codes, if interested.
+- Currently, the function only works with Microsoft SQL Server and
+  Netezza databases. Feel free to contribute to the codes, if
+  interested.
 
 ## Example 1: Generate SQL queries and execute them in DMBS
 
@@ -98,11 +98,11 @@ con <- dbConnect(odbc(),
 
 sql_query = get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="basic", dbtype="Netezza") 
 
-res = dbSendQuery(con, sql_query) # part of Step 3 in "Application 1"
-sql_query_mod = dbFetch(res) # part of Step 3 in "Application 1"
+res = dbSendQuery(con, sql_query) # part of Step 3 in "Example 1"
+sql_query_mod = dbFetch(res) # part of Step 3 in "Example 1"
 
-res = dbSendQuery(con, sql_query_mod) # part of Step 4 in "Application 1"
-output_table = dbFetch(res) # part of Step 4 in "Application 1"
+res = dbSendQuery(con, sql_query_mod) # part of Step 4 in "Example 1"
+output_table = dbFetch(res) # part of Step 4 in "Example 1"
 print(output) #desired summary table
 
 dbDisconnect(con) #close database connection
