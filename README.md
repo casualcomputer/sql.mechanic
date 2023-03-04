@@ -4,10 +4,14 @@ Henry Luan
 
 ## Overview
 
-The helper function `get_summary_codes` in the `sql.mechanic` package
-takes in a string that specifies a table’s database name, schema name,
-and table name. It outputs an SQL query that summarizes the table’s
-column statistics. If you need a quick solution, jump to **Example 2**.
+The core helper function **get_summary_codes** in the `sql.mechanic`
+package takes in a string that specifies a table’s database name, schema
+name, and table name. It outputs an SQL query that summarizes the
+table’s column statistics.
+
+If you don’t have much time to read or just want a quick solution, jump
+to [**Example
+2**](#example-2-automatically-summarize-tables-in-your-databases).
 
 ## Intended User
 
@@ -21,36 +25,49 @@ column statistics. If you need a quick solution, jump to **Example 2**.
 
 ## Limitations
 
-- You should test the CPU and disk usage of your database server using
-  some simple test cases constructed based on **Example 2**.
+- You probably want to understand how [**Example
+  2**](#example-2-automatically-summarize-tables-in-your-databases)affect
+  the CPU and disk usage of your database server, to avoid bad surprises
+  on your server’s resource usage.
+
+- If you use the setup of [**Example
+  2**](#example-2-automatically-summarize-tables-in-your-databases)on a
+  cloud database, you **MUST** do some testing, to understand how the
+  example affects the CPU and disk usage of your cloud resource. Please
+  avoid potentially expensive mistakes.
 
 - Currently, the function only works with Microsoft SQL Server and
   Netezza databases. Feel free to contribute to the codes, if
   interested.
 
+## Credits
+
+Specail credits: the R codes in this package are built on top of Gordon
+S. Linoff’s book *Data Analysis Using SQL and Excel, 2nd Edition*. His
+work has been a tremendous inspiration for the creation of this package.
+
 ## Example 1: Generate SQL queries and execute them in DMBS
 
-### \* Step 1: Install packages
+### Step 1: Install packages
 
 You can install the library from my GitHub. If you have concerns
 regarding the package’s security, you can download, check, and use the
-`get_summary_codes.R` file directly.
+“get_summary_codes.R” file directly.
 
 ``` r
 # Install package
-  library(devtools)
-  install_github("casualcomputer/sql.mechanic",quiet=TRUE)
+library(devtools)
+install_github("casualcomputer/sql.mechanic",quiet=TRUE)
 
 # Alternative: use the 'get_summary_codes.R' file only
   # source("get_summary_codes.R")
 ```
 
-### \* Step 2: Generate SQL quires
+### Step 2: Generate SQL quires
 
-The following codes 1) **generate** the SQL queries you need to
-summarize a table, and 2) **copy** (Ctrl+C) the codes to your clipboard.
-All you have to do is paste it to your SQL editor and execute the
-queries.
+The following codes 1) generate the SQL queries you need to summarize a
+table, and 2) copy (Ctrl+C) the codes to your clipboard. All you have to
+do is paste it to your SQL editor and execute the queries.
 
 ``` r
 library(sql.mechanic)
@@ -71,30 +88,69 @@ library(sql.mechanic)
     writeClipboard(sql_basic_netezza) 
 ```
 
-### \* Step 3: Paste the codes in your clipboard and run it in SQL
+### Step 3: Paste the codes in your clipboard and run it in SQL
 
-### \* Step 4: Copy, paste and execute the SQL queries from Step 3.
+In case you are curious, the SQL copied to your clipboard looks like
+this.
+
+``` sql
+SELECT REPLACE(REPLACE(REPLACE('<start> SELECT ''<col>'' as colname,
+                               COUNT(*) as numvalues,
+                               MAX(freqnull) as freqnull,
+                               CAST(MIN(minval) as CHAR(100)) as minval,
+                               SUM(CASE WHEN <col> = minval THEN freq ELSE 0 END) as numminvals,
+                               CAST(MAX(maxval) as CHAR(100)) as maxval,
+                               SUM(CASE WHEN <col> = maxval THEN freq ELSE 0 END) as nummaxvals,
+                               SUM(CASE WHEN freq =1 THEN 1 ELSE 0 END) as numuniques
+
+                               FROM (SELECT <col>, COUNT(*) as freq
+                               FROM SCHEMA_NAME.<tab> GROUP BY <col>) osum
+                                                   CROSS JOIN (SELECT MIN(<col>) as minval, MAX(<col>) as maxval, SUM(CASE WHEN <col> IS NULL THEN 1 ELSE 0 END) as freqnull
+                                                   FROM (SELECT <col> FROM SCHEMA_NAME.<tab>) osum
+                                                   ) summary',
+                               '<col>', column_name),
+                               '<tab>', 'TABLE_NAME'),
+                               '<start>',
+                               (CASE WHEN ordinal_position = 1 THEN ''
+                               ELSE 'UNION ALL' END)) as codes_data_summary
+                               FROM (SELECT table_name, case when regexp_like(column_name,'[a-z.]|GROUP')  then '"'||column_name||'"'
+                                                             else column_name end as column_name  , ordinal_position
+                               FROM information_schema.columns
+                               WHERE table_name ='TABLE_NAME') a;
+```
+
+### Step 4: Copy, paste and execute the query results from Step 3.
 
 ## Example 2: Automatically summarize tables in your databases
 
-This example shows you how you can achieve everything you did in Example
-1 with a few lines of R codes.
+This example shows you how you can summarize tables as you did in
+Example 1, with only a few lines of R codes.
 
 ``` r
+# Install package
+library(devtools)
+install_github("casualcomputer/sql.mechanic",quiet=TRUE)
+
+# Alternative: use the 'get_summary_codes.R' file only
+  # source("get_summary_codes.R")
+
+# Load packages  
+library(sql.mechanic)
 library(odbc)
 library(DBI)
 
-# Method 1: prompting user (you need to make changes)
-con <- dbConnect(odbc(),
-                 Driver = "SQL Server",
-                 Server = "mysqlhost",
-                 Database = "mydbname",
-                 UID = "myuser",
-                 PWD = "Database password",
-                 Port = 1433, encoding = 'windows-1252') #'windows-1252' allows French to display properly
+# Connect to database(s)
+## Method 1: prompting user (you need to make some changes here)
+  con <- dbConnect(odbc(),
+                   Driver = "SQL Server",
+                   Server = "mysqlhost",
+                   Database = "mydbname",
+                   UID = "myuser",
+                   PWD = "Database password",
+                   Port = 1433, encoding = 'windows-1252') #'windows-1252' allows French to display properly
 
-# Alternative Method: Using a DSN
-#con <- dbConnect(odbc::odbc(), "DNS_NAMES", encoding = 'windows-1252')
+## Alternative Method: Using a DSN
+  #con <- dbConnect(odbc::odbc(), "DNS_NAMES", encoding = 'windows-1252')
 
 sql_query = get_summary_codes("DB_NAME.SCHEMA_NAME.TABLE_NAME", type="basic", dbtype="Netezza") 
 
